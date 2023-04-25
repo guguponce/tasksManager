@@ -39,7 +39,8 @@ export default function AccomplishedModal({
   const [accomplished, setAccomplished] = useState<boolean>(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const navigate = useNavigate();
-  const { getNewTasksLists } = useContext(FirestoreContext);
+  const { getNewTasksLists, oneTimeSession, retrievedTasks } =
+    useContext(FirestoreContext);
   const { userID } = useContext(AuthContext);
   const [accomplishedDate, setAccomplishedDate] = useState<string>();
 
@@ -54,18 +55,41 @@ export default function AccomplishedModal({
 
   const handleAccomplished = async () => {
     if (accomplishedDate && !!userID?.userUID) {
-      const updating = await updateDoc(doc(db, `user/${userID?.userUID}/tasks`, id), {
-        ...task,
-        accomplished,
-        accomplishedDate: !!accomplishedDate ? accomplishedDate : currentDate,
-        progress: "Finished"
-      }).then((res) => {
+      const updating = await updateDoc(
+        doc(db, `user/${userID?.userUID}/tasks`, id),
+        {
+          ...task,
+          accomplished,
+          accomplishedDate: !!accomplishedDate ? accomplishedDate : currentDate,
+          progress: "Finished",
+        }
+      ).then((res) => {
         getNewTasksLists();
         setTimeout(() => {
           navigate("/");
         }, 1000);
       });
-    }
+    } else if (oneTimeSession && !!retrievedTasks) {
+      const modifiedTasks: iRetrievedTask[] = [
+        ...retrievedTasks.filter((t) => t.id !== id),
+        {
+          id,
+          data: {
+            ...task,
+            accomplished,
+            accomplishedDate: !!accomplishedDate
+              ? accomplishedDate
+              : currentDate,
+            progress: "Finished",
+          },
+        },
+      ];
+      localStorage.setItem("tasks", JSON.stringify(modifiedTasks));
+      getNewTasksLists();
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+      }
   };
 
   return (

@@ -40,7 +40,6 @@ export default function TagTasks() {
         .filter((t) => t !== tag),
     [tagTasks]
   );
-  console.log("relatedTags", relatedTags);
   return (
     <Box
       width={"100vw"}

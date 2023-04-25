@@ -56,6 +56,7 @@ export default function TaskBox({
         as="article"
         display={"flex"}
         flexDirection={"column"}
+        minW="175px"
         maxW={{ base: "175px", xl: "200px" }}
         minH={{ base: "200px", xl: "200px" }}
         p="5"
@@ -130,7 +131,7 @@ export default function TaskBox({
           ? "orange"
           : "yellow "}
           size={"sm"}
-          border={"1px solid #2D374"}
+          border={"1px solid #ccc"}
           borderRadius={4}
           value={
             progress === "Not Started"

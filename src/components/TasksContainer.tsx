@@ -1,7 +1,7 @@
-import { Box, Heading, Wrap } from "@chakra-ui/react";
+import { Box, Flex, Heading, Wrap } from "@chakra-ui/react";
 import React from "react";
 import TaskBox from "./TaskBox";
-import { CategoryTypes, iRetrievedTask } from "../utils/interfaces";
+import { CategoryTypes, iRetrievedTask, priorityColors } from "../utils/interfaces";
 
 interface Props {
   tasks: iRetrievedTask[] | null | undefined;
@@ -21,7 +21,7 @@ export default function TasksContainer({
   priorityFilter,
 }: Props) {
   return (
-    <Box id="tasksDisplay" my={4}>
+    <Flex id="tasksDisplay" my={4} minH={"200px"} justify={"center"} align={"center"}>
       {!!tasks?.length ? (
         <Wrap justify={"center"} spacing={{ base: 3, xl: 6 }}>
           {tasks.map((task, i) => (
@@ -49,12 +49,14 @@ export default function TasksContainer({
           fontSize={"1.5rem"}
           mt={6}
           textAlign={"center"}
+          p={4} borderRadius={8} border={`2px solid ${priorityColors.HIGH}`}
+          color={priorityColors.HIGH}
         >
           There are no {!!priorityFilter && `${priorityFilter.toLocaleLowerCase()} priority `} {typeTasks === "All" ? "" : typeTasks.toLowerCase()}{" "}
           
           tasks
         </Heading>
       )}
-    </Box>
+    </Flex>
   );
 }

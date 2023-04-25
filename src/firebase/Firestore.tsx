@@ -51,6 +51,10 @@ export const FirestoreContext = createContext<iFirestoreContext>({
   getTasks,
   retrievedTasks: [],
   getNewTasksLists: () => {},
+  logInOneTimeSession: ()=>{},
+  logOutOneTimeSession: ()=>{},
+  oneTimeSession: true
+
 });
 
 export default function FirestoreProvider({
@@ -63,6 +67,10 @@ export default function FirestoreProvider({
   >();
   const [taskChange, toggleTaskChange] = useState<boolean>(false);
   const { logged, userID } = useContext(AuthContext)
+
+  const [ oneTimeSession, setOneTimeSession] = useState<boolean>(false)
+  const [localTasks, setLocalTasks] = useState<iRetrievedTask[] | null>()
+
   useEffect(() => {
     logged && !!userID?.userUID ?
     getTasks(userID.userUID).then((res) => {
@@ -97,17 +105,35 @@ export default function FirestoreProvider({
     }) : setRetrievedTasks(null)
   }, [taskChange, logged]);
 
-  
 
-  
   function getNewTasksLists() {
     toggleTaskChange(!taskChange);
   }
+
+  useEffect(()=>{
+    const localLogged = localStorage.getItem("oneTimeSession")
+    setOneTimeSession(localLogged==="true")
+  },[])
   
+  function logInOneTimeSession(){
+    setOneTimeSession(true)
+    localStorage.setItem("oneTimeSession", "true")
+  }
+  function logOutOneTimeSession(){
+    setOneTimeSession(false)
+    setRetrievedTasks([])
+    localStorage.setItem("oneTimeSession", "false")
+
+  }
+
+  useEffect(()=>{
+    const tasksJSON = localStorage.getItem("tasks")
+    oneTimeSession && setRetrievedTasks(prev=>!!tasksJSON ? JSON.parse(tasksJSON) : [])
+  },[oneTimeSession, taskChange])
 
   return (
     <FirestoreContext.Provider
-      value={{ getNewTasksLists, retrievedTasks, addTask, getTasks }}
+      value={{ logInOneTimeSession,logOutOneTimeSession, oneTimeSession, getNewTasksLists, retrievedTasks, addTask, getTasks }}
     >
       {children}
     </FirestoreContext.Provider>

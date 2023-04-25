@@ -42,6 +42,9 @@ export interface iFirestoreContext {
   getTasks: (userUID: string) => Promise<{ id: string; data: iSubmittedTaskData }[] | null>;
   retrievedTasks: iRetrievedTask[] | null | undefined;
   getNewTasksLists: () => void;
+  logInOneTimeSession: ()=> void
+  logOutOneTimeSession: ()=>void,
+  oneTimeSession: boolean
 }
 
 export type CategoryTypes = "All" | "Work" | "Study" | "Personal";

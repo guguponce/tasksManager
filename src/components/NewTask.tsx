@@ -20,9 +20,9 @@ import {
 import { Select } from "@chakra-ui/select";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { FirestoreContext } from "../firebase/Firestore";
-import { iSubmittedTaskData } from "../utils/interfaces";
+import { iRetrievedTask, iSubmittedTaskData, priorityColors } from "../utils/interfaces";
 import { DeleteIcon } from "@chakra-ui/icons";
-import { getCurrentDate } from "../utils/utils";
+import { getCurrentDate, prioColor } from "../utils/utils";
 import { AuthContext } from "../firebase/AuthFirebase";
 
 export default function NewTask() {
@@ -39,7 +39,7 @@ const [formProcess, setFormProcess] = useState<
     "ready" | "loading" | "selected"
   >("ready");
 
-
+  const submitBtnRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const tagRef = useRef<HTMLInputElement>(null);
@@ -52,7 +52,7 @@ const [formProcess, setFormProcess] = useState<
 
   const toast = useToast();
     const {userID} = useContext(AuthContext)
-  const { retrievedTasks, addTask, getNewTasksLists } =
+  const { retrievedTasks, addTask, getNewTasksLists, oneTimeSession } =
     useContext(FirestoreContext);
   const date = useRef<string>("");
 
@@ -64,7 +64,7 @@ const [formProcess, setFormProcess] = useState<
       status: "error",
       isClosable: true,
       position: "top",
-      duration: 5000,
+      duration: 3000,
     });
   };
 
@@ -82,7 +82,10 @@ const [formProcess, setFormProcess] = useState<
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     event.preventDefault();
-    if (tagRef.current!.value !== "") {
+
+    if (!categories.length) {
+      showWarning("Please add category");
+    } else if (tagRef.current!.value !== "") {
       tagRef.current!.focus();
       showWarning("Please add the written Tag or erase it");
     } else if (linkRef.current!.value !== "") {
@@ -108,16 +111,24 @@ const [formProcess, setFormProcess] = useState<
         updateDate: "",
         createdAt: date.current
       };
-
+      if(submitBtnRef.current){submitBtnRef.current.disabled = true}
       if (!!userID?.userUID) {
         const adding = await addTask(userID.userUID, data);
-console.log('adding', adding)
         if (adding) {
           getNewTasksLists();
           setTimeout(() => {
             navigate("/");
           }, 2000);
         }
+      } else if(oneTimeSession){
+        if(!!retrievedTasks){
+        const modifiedTasks: iRetrievedTask[] = [...retrievedTasks, {id: id.replace("/", "-"), data}]
+        localStorage.setItem("tasks", JSON.stringify(modifiedTasks))
+        getNewTasksLists();
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      }
       }
     }
   };
@@ -227,7 +238,8 @@ console.log('adding', adding)
           backgroundColor={"#fefefe"}
           p={"1rem 1.5rem"}
           borderRadius={"0.5rem"}
-        >
+          isRequired
+          >
           <FormLabel>Categories</FormLabel>
           {["Work", "Study", "Personal"].map((category) => (
             <Checkbox
@@ -306,7 +318,7 @@ console.log('adding', adding)
         {/* links */}
         <FormControl
           boxShadow={"md"}
-          id="tag-form-control"
+          id="links-form-control"
           mt={4}
           backgroundColor={"#fefefe"}
           p={"1rem 1.5rem"}
@@ -363,7 +375,7 @@ console.log('adding', adding)
         {/* progress */}
         <FormControl
           boxShadow={"md"}
-          id="tag-form-control"
+          id="progress-form-control"
           mt={4}
           backgroundColor={"#fefefe"}
           p={"1rem 1.5rem"}
@@ -449,6 +461,10 @@ console.log('adding', adding)
         </FormControl>
 
         <Button
+          ref={submitBtnRef}
+          _disabled={{color: "#ccc", backgroundColor:"#aaa"}}
+          background={priorityColors.ACCOMPLISHED}
+          color="#fefefe"
           type="button"
           mt={4}
           display="block"

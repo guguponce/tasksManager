@@ -72,15 +72,15 @@ export default function Modal({
           {title}
         </Heading>
         <Divider colorScheme="gray" />
-        <Box
+        {description && <Box
           height={"7rem"}
           w={{ base: "100%", xl: "80%" }}
           p={3}
           bg={desatColor(accomplished, priority)}
           position={"relative"}
           overflow={"hidden"}
-          
           border={`1px solid ${prioColor(accomplished, priority)}`}
+          borderTop={0}
         >
           <Box
             height={"1.4rem"}
@@ -127,7 +127,7 @@ export default function Modal({
             {description.substring(0, 150)}
             {description.length > 150 && "..."}
           </Text>
-        </Box>
+        </Box>}
         {deadline && (
           <HStack
             alignSelf={"flex-start"}
@@ -178,6 +178,7 @@ export default function Modal({
           to={`/task/${task.id}`}
           textDecoration={"underline"}
           color="gray.700"
+          _hover={{outline: "1px solid #0d0d0d", borderRadius: "0.25rem"}}
         >
           <SmallAddIcon /> Details <ArrowForwardIcon id="forward-icon" ml={2} />
         </Link>

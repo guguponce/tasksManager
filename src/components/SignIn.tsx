@@ -13,13 +13,18 @@ import React, { useRef, useContext, useState, useEffect } from "react";
 import { AuthContext } from "../firebase/AuthFirebase";
 import { Link as ReachLink } from "react-router-dom";
 import { auth } from "../firebase/firebase";
+import { FirestoreContext } from "../firebase/Firestore";
 
 export default function SignIn() {
   const { signIn, logged, userID } = useContext(AuthContext);
-  const [user, setUser] = useState<{
-    email: string | null;
-    name: string | null;
-  }>();
+  const { logInOneTimeSession, oneTimeSession } = useContext(FirestoreContext);
+  const [user, setUser] = useState<
+    | {
+        email: string | null;
+        name: string | null;
+      }
+    | "localSession"
+  >();
 
   const handleLogIn = async (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -28,12 +33,14 @@ export default function SignIn() {
     const loggedUser = await signIn().then((res) => res);
     loggedUser && setUser(loggedUser);
   };
+
   useEffect(() => {
     userID?.email && setUser(userID);
-  }, [userID]);
+    oneTimeSession && setUser("localSession");
+  }, [userID, oneTimeSession]);
 
   return (
-    <Container
+    <Flex
       as="main"
       id="sign-in-main"
       py={10}
@@ -44,10 +51,24 @@ export default function SignIn() {
       borderRadius="2rem"
       boxShadow={"m"}
       backgroundColor={"#fafafa"}
+      direction={"column"}
+      align={"center"}
+      justify={"center"}
     >
-        <Button _hover={{ display: "block", outline: "1px solid #0d0d0d", transform: "scale(1.01)" }} onClick={handleLogIn}>
-          <i className="iIcon googleIcon" /> Log In with your Google Account
-        </Button>
-    </Container>
+      <Button
+        _hover={{ outline: "1px solid #0d0d0d", transform: "scale(1.01)" }}
+        onClick={handleLogIn}
+        my={2}
+      >
+        <i className="iIcon googleIcon" /> Log In with your Google Account
+      </Button>
+      <Button
+        _hover={{ outline: "1px solid #0d0d0d", transform: "scale(1.01)" }}
+        onClick={logInOneTimeSession}
+        my={2}
+      >
+        One time session
+      </Button>
+    </Flex>
   );
 }

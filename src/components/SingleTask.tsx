@@ -25,12 +25,7 @@ import { Link as ReachLink, useNavigate, useParams } from "react-router-dom";
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { dateFormatter, superDesatColor, prioColor } from "../utils/utils";
-import {
-  compareAsc,
-  format,
-  formatDistance,
-  formatDistanceToNow,
-} from "date-fns";
+
 import DeleteModal from "./DeleteModal";
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { FirestoreContext } from "../firebase/Firestore";
@@ -43,7 +38,7 @@ export default function SingleTask() {
   const { id } = useParams();
   const [timePercentage, setTimePercentage] = useState<number>(0);
   const navigate = useNavigate();
-  const { getNewTasksLists } = useContext(FirestoreContext);
+  const { getNewTasksLists, oneTimeSession, retrievedTasks } = useContext(FirestoreContext);
   const { userID } = useContext(AuthContext);
   useEffect(() => {
     if (id && !!userID?.userUID) {
@@ -60,6 +55,9 @@ export default function SingleTask() {
         }
       }
       getPost(id);
+    }else if(id && retrievedTasks && oneTimeSession){
+      const localTask = retrievedTasks.find(t=>t.id===id)
+      localTask ? setTask(localTask.data) : console.log("error, no task", localTask)
     }
   }, []);
   const handleDeleteTask = async () => {
@@ -70,6 +68,13 @@ export default function SingleTask() {
           navigate("/");
         }, 1000);
       });
+    }else if(id && retrievedTasks?.length && oneTimeSession){
+      const filteredTasks = retrievedTasks.filter(t=>t.id!==id)
+      localStorage.setItem("tasks", JSON.stringify(filteredTasks))
+      getNewTasksLists();
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
     }
   };
 

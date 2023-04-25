@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Tooltip,
   Text,
+  Heading,
 } from "@chakra-ui/react";
 import { useNavigate, Link as ReachLink } from "react-router-dom";
 import { FirestoreContext } from "../firebase/Firestore";
@@ -27,8 +28,11 @@ export default function Homepage() {
   const [modal, toggleModal] = useState<boolean>(false);
   const [selectedTask, setSelectedTask] = useState<iRetrievedTask>();
 
-  const { userID, logged } = useContext(AuthContext);
-  const { retrievedTasks } = useContext(FirestoreContext);
+  const { logged, userID } = useContext(AuthContext);
+  const { retrievedTasks, oneTimeSession, logOutOneTimeSession } =
+    useContext(FirestoreContext);
+
+  const appWorking = logged || oneTimeSession ? true : false;
   const [priorityFilter, setPriorityFilter] = useState<
     "High" | "Middle" | "Low" | undefined
   >();
@@ -80,7 +84,7 @@ export default function Homepage() {
       display={"flex"}
       flexDirection={"column"}
       alignItems={"center"}
-      justifyContent={logged ? "center" : "flex-start"}
+      justifyContent={appWorking ? "center" : "flex-start"}
     >
       <ChakraContainer
         id="homepage-container"
@@ -88,10 +92,10 @@ export default function Homepage() {
         display={"flex"}
         flexDirection={"column"}
         alignItems={"center"}
-        justifyContent={logged ? "flex-start" : "center"}
-        minHeight="300px"
-        height={logged ? "100%" : "30%"}
-        width={logged ? "100%" : "60%"}
+        justifyContent={appWorking ? "flex-start" : "center"}
+        minHeight="100vh"
+        height={appWorking ? "100%" : "30%"}
+        width={appWorking ? "100%" : "60%"}
         // @ts-ignore no problem in operation, although type error appears.
 
         transition={{
@@ -99,7 +103,7 @@ export default function Homepage() {
           ease: "easeInOut",
         }}
       >
-        {!logged ? (
+        {!appWorking ? (
           <SignIn />
         ) : (
           <Container
@@ -124,7 +128,12 @@ export default function Homepage() {
                 setSelectedTask={setSelectedTask}
               />
             )}
-            <Flex width={"100%"} justify={"space-between"} mb={4} bg="gray.200">
+            <Flex
+              width={{ base: "100%", lg: "90%", xl: "85%" }}
+              m="0rem auto 2rem"
+              justify={"space-between"}
+              bg="gray.200"
+            >
               <IconButton
                 fontSize={32}
                 fontWeight={800}
@@ -136,7 +145,14 @@ export default function Homepage() {
                 aria-label="Add new task"
                 icon={<AddIcon color="gray.600" boxSize={4} />}
               ></IconButton>
-              <Button bg="gray.600" colorScheme="blackAlpha" onClick={() => logOut()}>Log Out</Button>
+              <Heading fontSize={"2rem"}>{userID ? userID?.name : "One Time Session"}</Heading>
+              <Button
+                bg="gray.600"
+                colorScheme="blackAlpha"
+                onClick={() => (logged ? logOut() : logOutOneTimeSession())}
+              >
+                Log Out
+              </Button>
             </Flex>
             <Box>
               <Flex
@@ -215,71 +231,113 @@ export default function Homepage() {
                 setSelectedTask={setSelectedTask}
               />
             </Box>
-            {priorityValues?.high && (
-              <Flex
-                margin="2rem auto"
-                h="200px"
-                maxW={"400px"}
-                w={"100%"}
-                position={"relative"}
-                align={"center"}
-                justify={"space-around"}
-              >
-                <Box position="relative" w="200px">
-                  <Tooltip hasArrow color="gray.800" bg={"hsla(5, 49%, 80%, 1)"} placement="right" label={`High Priority: ${priorityValues.high.toFixed(2)}%`}>
-                    <CircularProgress
-                      value={priorityValues?.high}
-                      thickness="4px"
-                      position={"absolute"}
-                      size={"200px"}
-                      left={"50%"}
-                      top={"50%"}
-                      color={priorityColors.HIGH}
-                      transform={`translate(-50%,-50%) rotate(-${priorityValues?.high.toFixed(
+            {!!retrievedTasks?.length && !!priorityValues && (
+              <Flex direction={"column"} align={"center"} borderTop={"3px solid #ccc"}>
+                <Heading mt={4}>Priorities:</Heading>
+                <Flex
+                  margin="2rem auto"
+                  h="200px"
+                  maxW={"400px"}
+                  w={"100%"}
+                  position={"relative"}
+                  align={"center"}
+                  justify={"space-around"}
+                >
+                  <Box position="relative" w="200px">
+                    <Tooltip
+                      hasArrow
+                      color="gray.800"
+                      bg={"hsla(5, 49%, 80%, 1)"}
+                      placement="right"
+                      label={`High Priority: ${priorityValues.high.toFixed(
                         2
-                      )}deg)`}
-                    />
-                  </Tooltip>
-                  <Tooltip hasArrow color="gray.800" bg={"hsla(29, 70%, 80%, 1)"} placement="right"
-                    label={`Middle Priority: ${priorityValues.middle.toFixed(
-                      2
-                    )}%`}
-                  >
-                    <CircularProgress
-                      value={priorityValues?.middle}
-                      thickness="4px"
-                      position={"absolute"}
-                      color={priorityColors.MIDDLE}
-                      size={"150px"}
-                      left={"50%"}
-                      top={"50%"}
-                      transform={`translate(-50%,-50%) rotate(${
-                        180 - priorityValues?.middle
-                      }deg)`}
-                    />
-                  </Tooltip>
+                      )}%`}
+                    >
+                      <CircularProgress
+                        value={priorityValues?.high}
+                        thickness="4px"
+                        position={"absolute"}
+                        size={"200px"}
+                        left={"50%"}
+                        top={"50%"}
+                        color={priorityColors.HIGH}
+                        transform={`translate(-50%,-50%) rotate(-${priorityValues?.high.toFixed(
+                          2
+                        )}deg)`}
+                        onClick={() =>
+                          setPriorityFilter((prev) =>
+                            prev === "High" ? undefined : "High"
+                          )
+                        }
+                      />
+                    </Tooltip>
+                    <Tooltip
+                      hasArrow
+                      color="gray.800"
+                      bg={"hsla(29, 70%, 80%, 1)"}
+                      placement="right"
+                      label={`Middle Priority: ${priorityValues.middle.toFixed(
+                        2
+                      )}%`}
+                    >
+                      <CircularProgress
+                        value={priorityValues?.middle}
+                        thickness="4px"
+                        position={"absolute"}
+                        color={priorityColors.MIDDLE}
+                        size={"150px"}
+                        left={"50%"}
+                        top={"50%"}
+                        transform={`translate(-50%,-50%) rotate(${
+                          180 - priorityValues?.middle
+                        }deg)`}
+                        onClick={() =>
+                          setPriorityFilter((prev) =>
+                            prev === "Middle" ? undefined : "Middle"
+                          )
+                        }
+                      />
+                    </Tooltip>
 
-                  <Tooltip hasArrow color="gray.800" bg={"hsl(56, 90%, 80%)"} placement="right"
-                  
-                    label={`Low Priority: ${priorityValues.low.toFixed(2)}%`}
-                  >
-                    <CircularProgress
-                      value={priorityValues?.low}
-                      thickness="4px"
-                      position={"absolute"}
-                      size={"100px"}
-                      left={"50%"}
-                      top={"50%"}
-                      color={priorityColors.LOW}
-                      transform={`translate(-50%,-50%) rotate(-${priorityValues?.low}deg)`}
-                    />
-                  </Tooltip>
-                </Box>
-                <Box id="priority-graphic-text">
-                  <Text><CircleIcon color={priorityColors.HIGH} />High: {priorityValues.high.toFixed(2)}</Text>
-                  <Text><CircleIcon color={priorityColors.MIDDLE} />Middle:{priorityValues.middle.toFixed(2)}</Text>
-                  <Text><CircleIcon color={priorityColors.LOW} />Low:{priorityValues.low.toFixed(2)}</Text>
-                </Box>
+                    <Tooltip
+                      hasArrow
+                      color="gray.800"
+                      bg={"hsl(56, 90%, 80%)"}
+                      placement="right"
+                      label={`Low Priority: ${priorityValues.low.toFixed(2)}%`}
+                    >
+                      <CircularProgress
+                        value={priorityValues?.low}
+                        thickness="4px"
+                        position={"absolute"}
+                        size={"100px"}
+                        left={"50%"}
+                        top={"50%"}
+                        color={priorityColors.LOW}
+                        transform={`translate(-50%,-50%) rotate(-${priorityValues?.low}deg)`}
+                        onClick={() =>
+                          setPriorityFilter((prev) =>
+                            prev === "Low" ? undefined : "Low"
+                          )
+                        }
+                      />
+                    </Tooltip>
+                  </Box>
+                  <Box id="priority-graphic-text">
+                    <Text onClick={() => setPriorityFilter("High")}>
+                      <CircleIcon color={priorityColors.HIGH} />
+                      High: {priorityValues.high.toFixed(2)}
+                    </Text>
+                    <Text onClick={() => setPriorityFilter("Middle")}>
+                      <CircleIcon color={priorityColors.MIDDLE} />
+                      Middle:{priorityValues.middle.toFixed(2)}
+                    </Text>
+                    <Text onClick={() => setPriorityFilter("Low")}>
+                      <CircleIcon color={priorityColors.LOW} />
+                      Low:{priorityValues.low.toFixed(2)}
+                    </Text>
+                  </Box>
+                </Flex>
               </Flex>
             )}
           </Container>

@@ -19,8 +19,6 @@ function App() {
         <Route path="/update/:id" element={<UpdateTask />} />
         <Route path="/task/:id" element={<SingleTask />} />
         <Route path="/:tag" element={<TagTasks />} />
-
-        
       </Routes></FirestoreProvider>
     </AuthProvider>
   );

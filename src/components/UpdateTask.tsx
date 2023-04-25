@@ -24,21 +24,10 @@ import {
 import { Select } from "@chakra-ui/select";
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { FirestoreContext } from "../firebase/Firestore";
-import { iSubmittedTaskData, priorityColors } from "../utils/interfaces";
+import { iRetrievedTask, iSubmittedTaskData, priorityColors } from "../utils/interfaces";
 import { db } from "../firebase/firebase";
 import {
-  deleteObject,
-  getDownloadURL,
-  getMetadata,
-  listAll,
-  ref,
-  uploadBytesResumable,
-} from "firebase/storage";
-import {
-  CloseIcon,
   DeleteIcon,
-  DownloadIcon,
-  SpinnerIcon,
 } from "@chakra-ui/icons";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import Loading from "./Loading";
@@ -74,7 +63,7 @@ export default function UpdateTask() {
   const toast = useToast();
   const { userID } = useContext(AuthContext);
 
-  const { getNewTasksLists } = useContext(FirestoreContext);
+  const { getNewTasksLists, retrievedTasks, oneTimeSession } = useContext(FirestoreContext);
 
   const showWarning = (title: string) => {
     toast({
@@ -100,7 +89,11 @@ export default function UpdateTask() {
         }
       }
       getTask(id);
+    }else if(id && retrievedTasks && oneTimeSession){
+      const localTask = retrievedTasks.find(t=>t.id===id)
+      localTask ? setUpdatingTask(localTask.data) : console.log("error, no task", localTask)
     }
+
   }, []);
 
   // pass data from Post to Form
@@ -167,6 +160,13 @@ export default function UpdateTask() {
             }, 1000);
           }
         );
+      } else if(oneTimeSession && !!retrievedTasks){
+        const modifiedTasks: iRetrievedTask[] = [...retrievedTasks.filter(t=>t.id!==id), {id, data}]
+        localStorage.setItem("tasks", JSON.stringify(modifiedTasks))
+        getNewTasksLists();
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
       }
     }
   };
